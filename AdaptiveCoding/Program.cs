@@ -99,18 +99,56 @@ namespace Arithmetic_coding
 				}
 			}
 			BigInteger number = nodes[nodes.Count - 1].cbi + nodes[nodes.Count - 1].cei;
-
+			BigInteger test = multiGCD(nodes[nodes.Count-1].cbi, nodes[nodes.Count - 1].cei, nodes[nodes.Count - 1].zi);
 			
 
-			BigInteger test = multiGCD(nodes[nodes.Count-1].cbi, nodes[nodes.Count - 1].cei, nodes[nodes.Count - 1].zi);
-			string encode = ToBinaryString(test);
+			BigInteger ch1= nodes[nodes.Count - 1].cbi / test;
+
+			BigInteger ch2 = nodes[nodes.Count - 1].cei / test;
+
+			BigInteger z1 = nodes[nodes.Count - 1].zi / test;
+
+			BigInteger power = new BigInteger(0);
+
+			while (Power(2, power) < z1)
+			{
+				power++;
+			}
+
+			BigInteger resultStep = Power(2, power);
+			BigInteger ccode = 0;
+			ccode =  nodes[nodes.Count - 1].cbi * resultStep / nodes[nodes.Count - 1].zi;
+			string encode = "0.";
+			encode += ToBinaryString(ccode);
+
+
+			double decode = FromBinary(encode);
 
 
 
 
-			Console.WriteLine(encode);
+
+
 
 		}
+		public static double FromBinary(string encode)
+		{
+			double ten = 0;
+			for (int i = 2; i < encode.Length; i++)
+			{
+				if (encode[i] == '1') ten +=  OtrPower(2, i*-1) * 2;
+			}
+			return ten;
+		}
+		
+
+		public static float OtrPower(float a, float b)
+		{
+			b = b * -1;
+			float result = 1 / ((float)Math.Pow(a, b));
+			return result;
+		}
+
 		static BigInteger classicGCD(BigInteger a, BigInteger b)
 		{
 			while (b != 0)
@@ -150,6 +188,15 @@ namespace Arithmetic_coding
 			{
 				return x * Power(x, n - 1);
 			}
+		}
+		public static void BAToSingle(byte[] bytes, int index)
+		{
+			float value = BitConverter.ToSingle(bytes, index);
+
+			
+			BitConverter.ToString(bytes, index, 4);
+
+
 		}
 
 		public static string ToBinaryString(this BigInteger bigint)
