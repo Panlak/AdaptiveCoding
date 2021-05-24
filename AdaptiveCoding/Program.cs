@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
+using PeterO;
+using PeterO.Numbers;
 
 namespace Arithmetic_coding
 {
@@ -26,19 +28,22 @@ namespace Arithmetic_coding
 		public BigInteger cbi { get; set; }
 		public BigInteger zi { get; set; }
 		public BigInteger cei { get; set; }
+
+
 	}
 
-	static class  Program
+	static class Program
 	{
 		public static List<Node> nodes = new List<Node>();
 		public static Dictionary<char, long> keyAndFrequencies = new Dictionary<char, long>();
 
-
+		
 		static void Main(string[] args)
 		{
-			string word = "sszzzuyzuuo".ToLower();
-			string temp = string.Concat(word.Distinct().OrderBy(c => c));
-
+			Console.WriteLine("Enter message: ");
+			string word = Console.ReadLine().ToLower();
+			string temp = '.' + string.Concat(word.Distinct().OrderBy(c => c));
+			word += '.';
 			Console.WriteLine($"Word = {word}");
 			Console.WriteLine();
 			foreach (var c in word)
@@ -99,10 +104,10 @@ namespace Arithmetic_coding
 				}
 			}
 			BigInteger number = nodes[nodes.Count - 1].cbi + nodes[nodes.Count - 1].cei;
-			BigInteger test = multiGCD(nodes[nodes.Count-1].cbi, nodes[nodes.Count - 1].cei, nodes[nodes.Count - 1].zi);
-			
+			BigInteger test = multiGCD(nodes[nodes.Count - 1].cbi, nodes[nodes.Count - 1].cei, nodes[nodes.Count - 1].zi);
 
-			BigInteger ch1= nodes[nodes.Count - 1].cbi / test;
+
+			BigInteger ch1 = nodes[nodes.Count - 1].cbi / test;
 
 			BigInteger ch2 = nodes[nodes.Count - 1].cei / test;
 
@@ -117,35 +122,87 @@ namespace Arithmetic_coding
 
 			BigInteger resultStep = Power(2, power);
 			BigInteger ccode = 0;
-			ccode =  nodes[nodes.Count - 1].cbi * resultStep / nodes[nodes.Count - 1].zi;
+			ccode = nodes[nodes.Count - 1].cbi * resultStep / nodes[nodes.Count - 1].zi;
 			string encode = "0.";
 			encode += ToBinaryString(ccode);
+			//decode
+			nodes.Clear();
+			EFloat decode = (EFloat)(double)ccode / (double)Power(2, power);
+			
+			foreach (var c in word)
+			{
+				nodes.Add(new Node(temp) { Symbol = c });
+			}
+			for (int step = 1; step < nodes.Count; step++)
+			{
+				BigInteger[] temparray = new BigInteger[temp.Length];
+				for (int i = 0; i < nodes[step - 1].arrey.Length; i++)
+				{
+					temparray[i] = nodes[step - 1].arrey[i];
 
+				}
+				nodes[step].arrey = temparray;
+				nodes[step].arrey[temp.IndexOf(nodes[step - 1].Symbol)] += 1;
+				for (int i = 0; i < nodes[step].arrey.Length; i++)
+				{
+					nodes[step].si += nodes[step].arrey[i];
+				}
+			}
+			
+			Node DecodeNode = new Node(temp);
+			string result = "";
+			while (true)
+			{
+				for (int i = 0; i < DecodeNode.arrey.Length; i++)
+				{
+					DecodeNode.si += DecodeNode.arrey[i];
+				}
+				EFloat interval = 0;
+				EFloat[,] arreyPr = new EFloat[temp.Length, 2];
+				for (int i = 0; i < DecodeNode.arrey.Length; i++)
+				{
+					arreyPr[i, 0] = interval;
+					interval += (double)DecodeNode.arrey[i] / (double)DecodeNode.si;
+					
+					arreyPr[i, 1] = interval;
+					
+				}
+				int count = 0;
+				for (int i = 0; i < temp.Length; i++)
+				{
+					EFloat g =  EFloat.Max(decode, arreyPr[i, 0]);
 
-			double decode = FromBinary(encode);
+					EFloat g1 = EFloat.Max(decode, arreyPr[i, 1]);
 
-
-
-
-
-
+					if (decode > arreyPr[i, 0] && decode < arreyPr[i, 1])
+					{
+								result += temp[i];
+								DecodeNode.arrey[i] += 1;
+								DecodeNode.si = 0;
+								decode = (decode - arreyPr[i, 0]) / (arreyPr[i, 1] - arreyPr[i, 0]);
+								break;
+					}
+						
+					
+				}
+				if (result[result.Length - 1] == '.') { Console.WriteLine(result); break; }
+			}
 
 		}
+
 		public static double FromBinary(string encode)
 		{
 			double ten = 0;
 			for (int i = 2; i < encode.Length; i++)
 			{
-				if (encode[i] == '1') ten +=  OtrPower(2, i*-1) * 2;
+				if (encode[i] == '1') ten += OtrPower(2, i * -1) * 2;
 			}
 			return ten;
 		}
-		
-
 		public static float OtrPower(float a, float b)
 		{
 			b = b * -1;
-			float result = 1 / ((float)Math.Pow(a, b));
+			float result = 1 / ((float)Power((BigInteger)a, (BigInteger)b));
 			return result;
 		}
 
@@ -168,9 +225,6 @@ namespace Arithmetic_coding
 			return gcd;
 		}
 
-
-
-
 		static BigInteger Power(BigInteger x, BigInteger n)
 		{
 			if (n == 0)
@@ -188,15 +242,6 @@ namespace Arithmetic_coding
 			{
 				return x * Power(x, n - 1);
 			}
-		}
-		public static void BAToSingle(byte[] bytes, int index)
-		{
-			float value = BitConverter.ToSingle(bytes, index);
-
-			
-			BitConverter.ToString(bytes, index, 4);
-
-
 		}
 
 		public static string ToBinaryString(this BigInteger bigint)
